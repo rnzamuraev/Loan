@@ -1,9 +1,8 @@
-export default class Slider {
+import Slider from "./slider";
+
+export default class MainSlider extends Slider {
   constructor(page, btns) {
-    this.page = document.querySelector(page);
-    this.slides = this.page.children;
-    this.btns = document.querySelectorAll(btns);
-    this.slideIndex = 1;
+    super(page, btns);
   }
 
   showSlide(n) {
@@ -12,10 +11,8 @@ export default class Slider {
     } else if (n < 1) {
       this.slideIndex = this.slides.length;
     }
-
     try {
       this.hanson.style.opacity = "0";
-
       if (n === 3) {
         this.hanson.classList.add("animated");
         setTimeout(() => {
@@ -26,11 +23,9 @@ export default class Slider {
         this.hanson.classList.remove("slideInUp");
       }
     } catch (err) {}
-
     this.slides.forEach((slide) => {
       slide.style.display = "none";
     });
-
     this.slides[this.slideIndex - 1].style.display =
       "block";
   }
@@ -45,12 +40,10 @@ export default class Slider {
     } catch (err) {
       console.log("Этот блок сейчас не может быть показан");
     }
-
     this.btns.forEach((btn) => {
       btn.addEventListener("click", () => {
         this.plusSlide(1);
       });
-
       btn.parentNode.previousElementSibling.addEventListener(
         "click",
         (e) => {
@@ -60,7 +53,6 @@ export default class Slider {
         }
       );
     });
-
     this.showSlide(this.slideIndex);
   }
 }
