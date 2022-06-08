@@ -2,6 +2,7 @@ import MainSlider from "./modules/slider/slider-main";
 import MiniSlider from "./modules/slider/slider-mini";
 import VideoPlayer from "./modules/playVideo";
 import Difference from "./modules/difference";
+import Forms from "./modules/form";
 
 window.addEventListener("DOMContentLoaded", () => {
   const slider = new MainSlider({
@@ -9,6 +10,12 @@ window.addEventListener("DOMContentLoaded", () => {
     container: ".page",
   });
   slider.render();
+
+  const modulesPageSlider = new MainSlider({
+    container: ".moduleapp",
+    btns: ".sidecontrol__controls .next",
+  });
+  modulesPageSlider.render();
 
   const showUpSlider = new MiniSlider({
     container: ".showup__content-slider",
@@ -48,4 +55,6 @@ window.addEventListener("DOMContentLoaded", () => {
     ".officernew",
     ".officer__card-item"
   ).init();
+
+  new Forms(".form", "input", "[name='email']").init();
 });

@@ -6,11 +6,14 @@ export default class MainSlider extends Slider {
   }
 
   showSlide(n) {
-    if (n > this.slides.length) {
-      this.slideIndex = 1;
-    } else if (n < 1) {
-      this.slideIndex = this.slides.length;
-    }
+    try {
+      if (n > this.slides.length) {
+        this.slideIndex = 1;
+      } else if (n < 1) {
+        this.slideIndex = this.slides.length;
+      }
+    } catch (e) {}
+
     try {
       this.hanson.style.opacity = "0";
       if (n === 3) {
@@ -23,23 +26,21 @@ export default class MainSlider extends Slider {
         this.hanson.classList.remove("slideInUp");
       }
     } catch (err) {}
-    this.slides.forEach((slide) => {
-      slide.style.display = "none";
-    });
-    this.slides[this.slideIndex - 1].style.display =
-      "block";
+
+    try {
+      this.slides.forEach((slide) => {
+        slide.style.display = "none";
+      });
+      this.slides[this.slideIndex - 1].style.display =
+        "block";
+    } catch (e) {}
   }
 
   plusSlide(n) {
     this.showSlide((this.slideIndex += n));
   }
 
-  render() {
-    try {
-      this.hanson = document.querySelector(".hanson");
-    } catch (err) {
-      console.log("Этот блок сейчас не может быть показан");
-    }
+  bindTriggers() {
     this.btns.forEach((btn) => {
       btn.addEventListener("click", () => {
         this.plusSlide(1);
@@ -53,6 +54,36 @@ export default class MainSlider extends Slider {
         }
       );
     });
+
+    document
+      .querySelectorAll(".prevmodule")
+      .forEach((item) => {
+        item.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.plusSlide(-1);
+        });
+      });
+
+    document
+      .querySelectorAll(".nextmodule")
+      .forEach((item) => {
+        item.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.plusSlide(1);
+        });
+      });
+  }
+
+  render() {
+    try {
+      this.hanson = document.querySelector(".hanson");
+    } catch (err) {
+      console.log("Этот блок сейчас не может быть показан");
+    }
+
     this.showSlide(this.slideIndex);
+    this.bindTriggers();
   }
 }
