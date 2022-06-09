@@ -3,6 +3,7 @@ import MiniSlider from "./modules/slider/slider-mini";
 import VideoPlayer from "./modules/playVideo";
 import Difference from "./modules/difference";
 import Forms from "./modules/form";
+import ShowInfo from "./modules/showInfo";
 
 window.addEventListener("DOMContentLoaded", () => {
   const slider = new MainSlider({
@@ -44,11 +45,12 @@ window.addEventListener("DOMContentLoaded", () => {
   });
   feedSlider.init();
 
-  const player = new VideoPlayer(
-    ".showup .play",
+  new VideoPlayer(".showup .play", ".overlay").init();
+
+  new VideoPlayer(
+    ".module__video-item .play",
     ".overlay"
-  );
-  player.init();
+  ).init();
 
   new Difference(
     ".officerold",
@@ -57,4 +59,6 @@ window.addEventListener("DOMContentLoaded", () => {
   ).init();
 
   new Forms(".form", "input", "[name='email']").init();
+
+  new ShowInfo(".plus__content").init();
 });

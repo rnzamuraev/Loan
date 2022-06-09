@@ -3103,6 +3103,38 @@ $({ target: 'Array', proto: true, forced: FORCED }, {
 
 /***/ }),
 
+/***/ "./node_modules/core-js/modules/es.array.filter.js":
+/*!*********************************************************!*\
+  !*** ./node_modules/core-js/modules/es.array.filter.js ***!
+  \*********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var $ = __webpack_require__(/*! ../internals/export */ "./node_modules/core-js/internals/export.js");
+var $filter = __webpack_require__(/*! ../internals/array-iteration */ "./node_modules/core-js/internals/array-iteration.js").filter;
+var fails = __webpack_require__(/*! ../internals/fails */ "./node_modules/core-js/internals/fails.js");
+var arrayMethodHasSpeciesSupport = __webpack_require__(/*! ../internals/array-method-has-species-support */ "./node_modules/core-js/internals/array-method-has-species-support.js");
+
+var HAS_SPECIES_SUPPORT = arrayMethodHasSpeciesSupport('filter');
+// Edge 14- issue
+var USES_TO_LENGTH = HAS_SPECIES_SUPPORT && !fails(function () {
+  [].filter.call({ length: -1, 0: 1 }, function (it) { throw it; });
+});
+
+// `Array.prototype.filter` method
+// https://tc39.github.io/ecma262/#sec-array.prototype.filter
+// with adding support of @@species
+$({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT || !USES_TO_LENGTH }, {
+  filter: function filter(callbackfn /* , thisArg */) {
+    return $filter(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+  }
+});
+
+
+/***/ }),
+
 /***/ "./node_modules/core-js/modules/es.array.iterator.js":
 /*!***********************************************************!*\
   !*** ./node_modules/core-js/modules/es.array.iterator.js ***!
@@ -5141,6 +5173,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _modules_playVideo__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./modules/playVideo */ "./src/js/modules/playVideo.js");
 /* harmony import */ var _modules_difference__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./modules/difference */ "./src/js/modules/difference.js");
 /* harmony import */ var _modules_form__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./modules/form */ "./src/js/modules/form.js");
+/* harmony import */ var _modules_showInfo__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./modules/showInfo */ "./src/js/modules/showInfo.js");
+/* harmony import */ var _modules_showInfo__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(_modules_showInfo__WEBPACK_IMPORTED_MODULE_5__);
+
 
 
 
@@ -5181,10 +5216,11 @@ window.addEventListener("DOMContentLoaded", function () {
     activeClass: "feed__item-active"
   });
   feedSlider.init();
-  var player = new _modules_playVideo__WEBPACK_IMPORTED_MODULE_2__["default"](".showup .play", ".overlay");
-  player.init();
+  new _modules_playVideo__WEBPACK_IMPORTED_MODULE_2__["default"](".showup .play", ".overlay").init();
+  new _modules_playVideo__WEBPACK_IMPORTED_MODULE_2__["default"](".module__video-item .play", ".overlay").init();
   new _modules_difference__WEBPACK_IMPORTED_MODULE_3__["default"](".officerold", ".officernew", ".officer__card-item").init();
   new _modules_form__WEBPACK_IMPORTED_MODULE_4__["default"](".form", "input", "[name='email']").init();
+  new _modules_showInfo__WEBPACK_IMPORTED_MODULE_5___default.a(".plus__content").init();
 });
 
 /***/ }),
@@ -5559,8 +5595,11 @@ function () {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return VideoPlayer; });
-/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! core-js/modules/web.dom-collections.for-each */ "./node_modules/core-js/modules/web.dom-collections.for-each.js");
-/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var core_js_modules_es_array_filter__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! core-js/modules/es.array.filter */ "./node_modules/core-js/modules/es.array.filter.js");
+/* harmony import */ var core_js_modules_es_array_filter__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_es_array_filter__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! core-js/modules/web.dom-collections.for-each */ "./node_modules/core-js/modules/web.dom-collections.for-each.js");
+/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_1__);
+
 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -5572,12 +5611,13 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 var VideoPlayer =
 /*#__PURE__*/
 function () {
-  function VideoPlayer(trigger, overlay) {
+  function VideoPlayer(triggers, overlay) {
     _classCallCheck(this, VideoPlayer);
 
-    this.btns = document.querySelectorAll(trigger);
+    this.btns = document.querySelectorAll(triggers);
     this.overlay = document.querySelector(overlay);
     this.close = this.overlay.querySelector(".close");
+    this.onPlayerStateChange = this.onPlayerStateChange.bind(this);
   }
 
   _createClass(VideoPlayer, [{
@@ -5585,14 +5625,34 @@ function () {
     value: function bindTriggers() {
       var _this = this;
 
-      this.btns.forEach(function (btn) {
-        btn.addEventListener("click", function () {
-          if (document.querySelector("iframe#frame")) {
-            _this.overlay.style.display = "flex";
-          } else {
-            var path = btn.getAttribute("data-url");
+      this.btns.forEach(function (btn, i) {
+        try {
+          var blockedElem = btn.closest(".module__video-item").nextElementSibling;
 
-            _this.createPlayer(path);
+          if (i % 2 == 0) {
+            blockedElem.setAttribute("data-disabled", "true");
+          }
+        } catch (e) {}
+
+        btn.addEventListener("click", function () {
+          if (!btn.closest(".module__video-item") || btn.closest(".module__video-item").getAttribute("data-disabled") !== "true") {
+            _this.activeBtn = btn;
+
+            if (document.querySelector("iframe#frame")) {
+              _this.overlay.style.display = "flex";
+
+              if (_this.path !== btn.getAttribute("data-url")) {
+                _this.path = btn.getAttribute("data-url");
+
+                _this.player.loadVideoById({
+                  videoId: _this.path
+                });
+              }
+            } else {
+              _this.path = btn.getAttribute("data-url");
+
+              _this.createPlayer(_this.path);
+            }
           }
         });
       });
@@ -5614,25 +5674,61 @@ function () {
       this.player = new YT.Player("frame", {
         height: "100%",
         width: "100%",
-        videoId: "".concat(url)
+        videoId: "".concat(url),
+        events: {
+          onStateChange: this.onPlayerStateChange
+        }
       });
-      console.log(this.player);
       this.overlay.style.display = "flex";
+    }
+  }, {
+    key: "onPlayerStateChange",
+    value: function onPlayerStateChange(state) {
+      try {
+        var blockedElem = this.activeBtn.closest(".module__video-item").nextElementSibling;
+        var playBtn = this.activeBtn.querySelector("svg").cloneNode(true);
+
+        if (state.data === 0) {
+          if (blockedElem.querySelector(".play__circle").classList.contains("closed")) {
+            blockedElem.querySelector(".play__circle").classList.remove("closed");
+            blockedElem.querySelector("svg").remove();
+            blockedElem.querySelector(".play__circle").appendChild(playBtn);
+            blockedElem.querySelector(".play__text").textContent = "play video";
+            blockedElem.querySelector(".play__text").classList.remove("attention");
+            blockedElem.style.opacity = 1;
+            blockedElem.style.filter = "none";
+            blockedElem.setAttribute("data-disabled", "false");
+          }
+        }
+      } catch (e) {}
     }
   }, {
     key: "init",
     value: function init() {
-      var tag = document.createElement("script");
-      tag.src = "https://www.youtube.com/iframe_api";
-      var firstScriptTag = document.getElementsByTagName("script")[0];
-      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-      this.bindTriggers();
-      this.bindClose();
+      if (this.btns.length > 0) {
+        var tag = document.createElement("script");
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName("script")[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        this.bindTriggers();
+        this.bindClose();
+      }
     }
   }]);
 
   return VideoPlayer;
 }();
+
+
+
+/***/ }),
+
+/***/ "./src/js/modules/showInfo.js":
+/*!************************************!*\
+  !*** ./src/js/modules/showInfo.js ***!
+  \************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
 
 
 
